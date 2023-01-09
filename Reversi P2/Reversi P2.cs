@@ -110,8 +110,7 @@ PlayerWh.Paint += player2;
 
 int n = 6;
 int[,] velden = new int[n, n];
-
-InitializeBoard(); //board.Invalidate();
+InitializeBoard();
 
 void click4(object o, EventArgs ea)
 {
@@ -166,6 +165,8 @@ void InitializeBoard()
     velden[n / 2, n / 2] = 1;
     velden[n / 2 - 1, n / 2] = 2;
     velden[n / 2, n / 2 - 1] = 2;
+
+    CountPieces();
 }
 
 void DrawBoard(object o, PaintEventArgs pea)
@@ -200,7 +201,6 @@ void DrawBoard(object o, PaintEventArgs pea)
 
 int breedte = board.Width / n;
 int hoogte = board.Height / n;
-
 int turn = 1;
 
 //Methode die de stenen telt van beide spelers in een array. ook lege velden worden geteld
@@ -221,7 +221,7 @@ void CountPieces()
                 WhitePieces++;
             }
         }
-    //converteren naar strings zodat hij als tekst op de labels kan
+    //omzetten naar strings zodat t als tekst op de labels kan
     string BlackPiecesstr = BlackPieces.ToString(); 
     string WhitePiecesstr = WhitePieces.ToString();
     statsbl.Text = BlackPiecesstr;
@@ -338,6 +338,7 @@ void zetsteen(object sender, MouseEventArgs mea)
     { velden[x, y] = 2; }
 
     board.Invalidate();
+    CountPieces();
 }
 board.MouseClick += zetsteen;
 
