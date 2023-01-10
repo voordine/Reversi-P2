@@ -3,6 +3,8 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
+
+//Buttons, labels en panel aanmaken
 #region
 Form scherm = new Form();
 scherm.Text = "Reversi";
@@ -70,7 +72,6 @@ scherm.Controls.Add(size8);
 scherm.Controls.Add(size10);
 scherm.Controls.Add(zet);
 
-//Players
 Label PlayerBl = new Label();
 PlayerBl.Location = new Point(45, 20);
 PlayerBl.Size = new Size(60, 60);
@@ -82,12 +83,10 @@ PlayerWh.Size = new Size(60, 60);
 Label statsbl = new Label();
 statsbl.Location = new Point(130, 40);
 statsbl.Size = new Size(60, 60);
-//stenenzwart.Text = "ja dus";
 
 Label statswh = new Label();
 statswh.Location = new Point(620, 40);
 statswh.Size = new Size(60, 60);
-//stenenwit.Text = "werkt dit";
 
 void player1(object sender, PaintEventArgs pea)
 {
@@ -105,20 +104,30 @@ scherm.Controls.Add(statsbl);
 scherm.Controls.Add(statswh);
 PlayerBl.Paint += player1;
 PlayerWh.Paint += player2;
-
 #endregion
 
 int n = 6;
 int[,] velden = new int[n, n];
+int turn = 1;
 InitializeBoard();
 
+#region
+
+//int beurt omzetten naar string
+string Beurtstring()
+{
+    if (turn == 1)
+        return "Black's turn";
+    else
+        return "White's turn";
+}
+zet.Text = Beurtstring();
 void click4(object o, EventArgs ea)
 {
     n = 4;
     InitializeBoard();
     board.Invalidate();
 }
-size4.Click += click4;
 
 void click6(object o, EventArgs ea)
 {
@@ -126,7 +135,6 @@ void click6(object o, EventArgs ea)
     InitializeBoard();
     board.Invalidate();
 }
-size6.Click += click6;
 
 void click8(object o, EventArgs ea)
 {
@@ -134,7 +142,6 @@ void click8(object o, EventArgs ea)
     InitializeBoard();
     board.Invalidate();
 }
-size8.Click += click8;
 
 void click10(object o, EventArgs ea)
 {
@@ -142,15 +149,33 @@ void click10(object o, EventArgs ea)
     InitializeBoard();
     board.Invalidate();
 }
-size10.Click += click10;
 
 void playagain(object o, EventArgs ea)
 {
     InitializeBoard();
     board.Invalidate();
-
 }
+
+void showrules(object o, EventArgs e)
+{
+    string ruleslist = "1. Each reversi piece has a black and a white side. \n" +
+        "2. Each player is assigned either a black or white color. \n" +
+        "3. Players take turns placing their pieces on an empty tile such that two of their own pieces surround the opponent's pieces horizontally/vertically/diagonally. \n" +
+        "4. When opponent's pieces are surrounded, they will flip to the same color as your own pieces\n" +
+        "5. If the opponent has no available turns, you continue taking turns. \n" +
+        "6. Once both players cannot make any more moves, the game ends. \n" +
+        "7. The player with the most pieces of their color on the board wins!";
+    MessageBox.Show(ruleslist);
+}
+
+size4.Click += click4;
+size6.Click += click6;
+size8.Click += click8;
+size10.Click += click10;
 newgame.Click += playagain;
+rules.Click += showrules;
+#endregion
+
 void InitializeBoard()
 {
     velden = new int[n, n];
@@ -201,9 +226,8 @@ void DrawBoard(object o, PaintEventArgs pea)
 
 int breedte = board.Width / n;
 int hoogte = board.Height / n;
-int turn = 1;
 
-//Methode die de stenen telt van beide spelers in een array. ook lege velden worden geteld
+//Methode die de stenen telt van beide spelers
 void CountPieces()
 {
     int BlackPieces = 0;
@@ -229,13 +253,8 @@ void CountPieces()
     
 } 
 
-/*void SwitchPlayer(bool moremoves = false)
-{
-    if (turn == 1)
-        turn = 2;
-    else if (turn == 2)
-        turn = 1;
-
+void SwitchPlayer(bool moremoves = false)
+{ 
     //Hier de legaliteit herchecken, en veld hertekenen
     bool geenzetten = true;
     for (int x = 0; x < breedte; x++)
@@ -243,16 +262,49 @@ void CountPieces()
         for (int y = 0; y < hoogte; y++)
         {
             //Als er nog geen legale zetten zijn, moet geenzetten gecheckt worden
-            if (geenzetten)
+            if (geenzetten) 
+            {
                 if (CheckLegal(x, y))
                 {
                     geenzetten = false;
-                    velden[x, y].Legaal = true;
                 }
-            velden[x, y].Legaal = CheckLegal(x, y);
+            }
         }
     }
-}*/
+
+    if (!geenzetten)
+    {
+        if (turn == 1)
+            turn = 2;
+        else if (turn == 2)
+            turn = 1;
+        CountPieces();
+    }
+    else
+    {
+        WinningMessage();
+    }
+}
+
+void WinningMessage()
+{
+    int BlackPieces = 0;
+    int WhitePieces = 0;
+    CountPieces();
+    if (BlackPieces > WhitePieces)
+    {
+        MessageBox.Show("Black wins!");
+    }
+    else if (WhitePieces > BlackPieces)
+    { 
+        MessageBox.Show("White wins!");
+    }
+    else if (BlackPieces == WhitePieces)
+    { 
+        MessageBox.Show("Remise!"); 
+    }
+
+}
 //Check de legaliteit van het vlak op x, y in elke richting
 //Zet is illegaal, behalve als er een legale richting gevonden wordt
 bool CheckLegal(int x, int y)
@@ -265,6 +317,13 @@ bool CheckLegal(int x, int y)
                 if (outflank(x + m, y + n, m, n))
                     return true;
     return false;
+}
+
+void Veld_Play(object o, MouseEventArgs mea)
+{
+    PlayReversi(mea.X, mea.Y); 
+    SwitchPlayer();
+   
 }
 
 //Vindt in elke richting een insluiter (stopt dus niet bij de eerste vinder) en speelt als gevonden
@@ -281,37 +340,35 @@ void PlayReversi(int x, int y)
 //Vind een insluitende steen met minstends één rode ertussen
 bool outflank(int x, int y, int newx, int newy, bool play = false, bool first = true)
 {
-    if (x < 0 || y < 0 || x >= breedte || y >= hoogte)
+    if (x < 0 || y < 0 || x >= n - 1 || y >= n - 1)
     {
         //Hij zoekt buiten het veld, dus niet op tijd gevonden
         return false;
     }
+
+    if (velden[x, y] == 0)
+    {
+        return false;
+    }
+
     if (velden[x, y] == turn)
     {
         //Als de aanliggende steen meteen van dezelfde kleur is, is insluiter false
-        if (first == true)
-            return false;
+        if (first) return false;
 
         //Er is een insluitende steen gevonden, als het een zet is moet er worden gespeeld
         //Anders alleen return
-        if (play)
-            Moves(-newx + x, -newy + y, -newx, -newy);
-
-        return true;
+        if (outflank(x + newx, y + newy, newx, newy, play, false))
+        {
+            if (play)
+            {
+                Moves(x, y, newx, newy);
+            }
+            return true;
+        }
+        return false;
     }
-    else
-    {
-        //Check of deze plek niet leeg is
-        if (velden[x, y] == 0)
-            return false;
-
-        //Er ligt een steen van de tegenstander
-        //zet de plaats een richting verder
-        x = x + newx;
-        y = y + newy;
-
-        return outflank(x, y, newx, newy, play, false);
-    }
+    return false;
 }
 
 //Speel stenen terug tot de beurt wordt teruggevonden
@@ -338,32 +395,12 @@ void zetsteen(object sender, MouseEventArgs mea)
     { velden[x, y] = 2; }
 
     board.Invalidate();
-    CountPieces();
-}
-board.MouseClick += zetsteen;
 
-//methode om van een int voor de speler een string te maken
-string Beurtstring()
-{
-    if (turn == 1)
-        return "Black's turn";
-    else
-        return "White's turn";
-}
-zet.Text = Beurtstring();
+    SwitchPlayer();
 
-void showrules(object o, EventArgs e)
-{
-    string ruleslist = "1. Each reversi piece has a black and a white side. \n" +
-        "2. Each player is assigned either a black or white color. \n" +
-        "3. Players take turns placing their pieces on an empty tile such that two of their own pieces surround the opponent's pieces horizontally/vertically/diagonally. \n" +
-        "4. When opponent's pieces are surrounded, they will flip to the same color as your own pieces\n" +
-        "5. If the opponent has no available turns, you continue taking turns. \n" +
-        "6. Once both players cannot make any more moves, the game ends. \n" +
-        "7. The player with the most pieces of their color on the board wins!";
-    MessageBox.Show(ruleslist);
-}
-rules.Click += showrules;
+} board.MouseClick += zetsteen;
+
 board.Paint += DrawBoard;
+board.MouseClick += Veld_Play;
 
 Application.Run(scherm);
