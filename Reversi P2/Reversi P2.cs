@@ -120,8 +120,10 @@ string turnstring()
 {
     if (turn == 1)
         return "Black's turn";
-    else
+    else if (turn == 2)
         return "White's turn";
+    else
+        return "caca";
 }
 
 //als n = i, dan i x i array die begint bij 0 en eindigt bij i - 1
@@ -234,6 +236,14 @@ void DrawBoard(object o, PaintEventArgs pea)
         }
 
     }
+    if (helpme)
+        for (int x = 0; x < n; x++)
+            for (int y = 0; y < n; y++)
+                if (CheckLegal(x, y) && velden[x, y] == 0)
+                { 
+                    gr.DrawEllipse(Pens.Black, x * breedte + 5, y * hoogte + 5, breedte - 10, hoogte - 10); 
+                }
+
 
 }
 
@@ -270,9 +280,9 @@ void SwitchPlayer(bool moremoves = false)
 {
     //Hier de legaliteit herchecken, en veld hertekenen
     bool nomoremoves = true;
-    for (int x = 0; x < breedte; x++)
+    for (int x = 0; x < n; x++)
     {
-        for (int y = 0; y < hoogte; y++)
+        for (int y = 0; y < n; y++)
         {
             //Als er nog geen legale zetten zijn, moet geenzetten gecheckt worden
             if (nomoremoves) 
@@ -350,17 +360,12 @@ bool CheckLegal(int x, int y)
 //Vind een insluitende steen met minstends één andere ertussen
 bool outflank(int x, int y, int newx, int newy)
 {
-    if (x < 0 || y < 0 || x > n - 1 || y > n - 1)
-    {
-        //Hij zoekt buiten het veld, dus niet op tijd gevonden
-        return false;
-    }
-
-    while (x >= 0 && x < n && y >= 0 && y < n)
+    while (x >= 0 && x < n && y >= 0 && y < n && velden[x, y] != turn && velden[x, y] != 0)
     {
         x += newx;
         y += newy;
     }
+
     if (x < 0 || y < 0 ||x >= n || y >= n || velden[x, y] == 0)
         return false;
         if (velden[x, y] == turn)
@@ -381,18 +386,6 @@ void Moves(int x, int y, int newx, int newy)
     }
 }
 
-bool ShowHelp()
-{
-    for (int x = 0; x < n; x++)
-        for (int y = 0; y < n; y++)
-            if (velden[x, y] == 0)
-            {
-                CheckLegal(x, y);
-                return true;
-            }
-
-    return false;
-}
 
 void zetsteen(object sender, MouseEventArgs mea)
 {
