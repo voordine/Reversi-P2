@@ -256,7 +256,7 @@ void CountPieces()
     string WhitePiecesstr = WhitePieces.ToString();
     statsbl.Text = BlackPiecesstr;
     statswh.Text = WhitePiecesstr;
-    
+
 } 
 
 void SwitchPlayer(bool moremoves = false)
@@ -294,8 +294,8 @@ void SwitchPlayer(bool moremoves = false)
 
 void GameOver()
 {
-    int BlackPieces = 0;
-    int WhitePieces = 0;
+    int BlackPieces = 2;
+    int WhitePieces = 2;
     CountPieces();
     if (BlackPieces > WhitePieces)
     {
@@ -305,7 +305,7 @@ void GameOver()
     { 
         MessageBox.Show("White wins!");
     }
-    else if (BlackPieces == WhitePieces)
+    else if (BlackPieces == WhitePieces && BlackPieces != 2)
     { 
         MessageBox.Show("Remise!"); 
     }
@@ -319,19 +319,19 @@ bool CheckLegal(int x, int y)
     if (velden[x, y] != 0)
         return false; 
     for (int m = -1; m <= 1; m++)
-        for (int n = -1; n <= 1; n++)
-            if (!(n == 0 && m == 0))
-                if (outflank(x + m, y + n, m, n, false, true))
+        for (int k = -1; k <= 1; k++)
+            if (!(k == 0 && m == 0))
+                if (outflank(x + m, y + k, m, k, false, true))
                     return true;
     return false;
 }
 
-/*void Veld_Play(object o, MouseEventArgs mea)
+void Veld_Play(object o, MouseEventArgs mea)
 {
     PlayReversi(mea.X, mea.Y); 
     SwitchPlayer();
    
-}*/
+}
 
 //Vindt in elke richting een insluiter (stopt dus niet bij de eerste vinder) en speelt als gevonden
 void PlayReversi(int x, int y)
@@ -339,9 +339,9 @@ void PlayReversi(int x, int y)
     //We gaan in elke richting een insluiter zoeken, en als die wordt gevonden,
     //wordt speelstenen vanaf daar getriggert
     for (int m = -1; m <= 1; m++)
-        for (int n = -1; n <= 1; n++)
-            if (!(n == 0 && m == 0))
-                outflank(x + m, y + n, m, n, true);
+        for (int k = -1; k <= 1; k++)
+            if (!(k == 0 && m == 0))
+                outflank(x + m, y + k, m, k, true);
 }
 
 //Vind een insluitende steen met minstends één andere ertussen
@@ -380,6 +380,25 @@ bool outflank(int x, int y, int newx, int newy, bool play = false, bool firststo
     return false;
 }
 
+bool berekenzet(int x, int y, int i, int j)
+{
+    int xi = x + i;
+    int yj = y + j;
+    while (xi >= 0 && xi < n && yj >= 0 && yj < n && velden[xi, yj] != turn && velden[xi, yj] != 0)
+    {
+        xi += i;
+        yj += j;
+    }
+
+    if (xi < 0 || xi >= n || yj < 0 || yj >= n || velden[xi, yj] == 0)
+        return false;
+
+    if (velden[xi, yj] == turn)
+        return true;
+
+    return false;
+}
+
 //Speel stenen terug tot de beurt wordt teruggevonden
 void Moves(int x, int y, int newx, int newy)
 {
@@ -405,8 +424,10 @@ void zetsteen(object sender, MouseEventArgs mea)
 
     board.Invalidate();
     SwitchPlayer();
+    CountPieces();
 
-} board.MouseClick += zetsteen;
+}
+board.MouseClick += zetsteen;
 
 board.Paint += DrawBoard;
 //board.MouseClick += Veld_Play;
