@@ -110,6 +110,7 @@ PlayerWh.Paint += player2;
 int n = 6;
 int[,] velden = new int[n, n];
 int turn = 1;
+bool helpme = false;
 InitializeBoard();
 
 #region
@@ -122,7 +123,6 @@ string turnstring()
     else
         return "White's turn";
 }
-zet.Text = turnstring();
 
 //als n = i, dan i x i array die begint bij 0 en eindigt bij i - 1
 void click4(object o, EventArgs ea) 
@@ -153,7 +153,6 @@ void click10(object o, EventArgs ea)
     board.Invalidate();
 }
 
-
 void playagain(object o, EventArgs ea)
 {
     InitializeBoard();
@@ -172,12 +171,20 @@ void showrules(object o, EventArgs e)
     MessageBox.Show(ruleslist);
 }
 
+void helpbutton(object o, EventArgs ea)
+{
+    helpme = !helpme;
+    board.Invalidate();
+}
+
+zet.Text = turnstring();
 size4.Click += click4;
 size6.Click += click6;
 size8.Click += click8;
 size10.Click += click10;
 newgame.Click += playagain;
 rules.Click += showrules;
+help.Click += helpbutton;
 #endregion
 
 //Array voor het speelveld maken
@@ -316,36 +323,32 @@ void GameOver()
 //Zet is illegaal, behalve als er een legale richting gevonden wordt
 bool CheckLegal(int x, int y)
 {
-    if (velden[x, y] != 0)
-        return false; 
-    for (int m = -1; m <= 1; m++)
-        for (int k = -1; k <= 1; k++)
-            if (!(k == 0 && m == 0))
-                if (outflank(x + m, y + k, m, k, false, true))
+    int dx = -1;
+    int dy = -1;
+
+    if (x < 1)
+        dx = 0;
+    if (y < 1)
+        dy = 0;
+
+    int ex = 1;
+    int ey = 1;
+
+    if (x >= (n - 1))
+        ex = 0;
+    if (y >= (n - 1))
+        ey = 0;
+
+    for (int m = dx; m <= ex; m++)
+        for (int k = dy; k <= ey; k++)
+            if (!(k == 0 && m == 0) && velden[x+m, y+k] != turn && velden[x+m, y+k] != 0)
+                if (outflank(x + m, y + k, m, k))
                     return true;
     return false;
 }
 
-void Veld_Play(object o, MouseEventArgs mea)
-{
-    PlayReversi(mea.X, mea.Y); 
-    SwitchPlayer();
-   
-}
-
-//Vindt in elke richting een insluiter (stopt dus niet bij de eerste vinder) en speelt als gevonden
-void PlayReversi(int x, int y)
-{
-    //We gaan in elke richting een insluiter zoeken, en als die wordt gevonden,
-    //wordt speelstenen vanaf daar getriggert
-    for (int m = -1; m <= 1; m++)
-        for (int k = -1; k <= 1; k++)
-            if (!(k == 0 && m == 0))
-                outflank(x + m, y + k, m, k, true);
-}
-
 //Vind een insluitende steen met minstends één andere ertussen
-bool outflank(int x, int y, int newx, int newy, bool play = false, bool firststone = true)
+bool outflank(int x, int y, int newx, int newy)
 {
     if (x < 0 || y < 0 || x > n - 1 || y > n - 1)
     {
@@ -353,49 +356,15 @@ bool outflank(int x, int y, int newx, int newy, bool play = false, bool firststo
         return false;
     }
 
-    if (velden[x, y] == 0)
+    while (x >= 0 && x < n && y >= 0 && y < n)
     {
-        return false; //Als een vak leeg is kan het niet ingesloten worden
+        x += newx;
+        y += newy;
     }
-
-    if (velden[x, y] == turn)
-    {
-        {
-            //Als de aanliggende steen meteen van dezelfde kleur is, is outflank false
-            if (firststone) return false;
-            //return true;
-        }
-        //Er is een insluitende steen gevonden, als het een zet is moet er worden gespeeld
-        //Anders alleen return
-        if (outflank(x + newx, y + newy, newx, newy, play, false))
-        {
-            if (play)
-            {
-                Moves(x, y, newx, newy);
-            }
+    if (x < 0 || y < 0 ||x >= n || y >= n || velden[x, y] == 0)
+        return false;
+        if (velden[x, y] == turn)
             return true;
-        }
-        return false;
-    }
-    return false;
-}
-
-bool berekenzet(int x, int y, int i, int j)
-{
-    int xi = x + i;
-    int yj = y + j;
-    while (xi >= 0 && xi < n && yj >= 0 && yj < n && velden[xi, yj] != turn && velden[xi, yj] != 0)
-    {
-        xi += i;
-        yj += j;
-    }
-
-    if (xi < 0 || xi >= n || yj < 0 || yj >= n || velden[xi, yj] == 0)
-        return false;
-
-    if (velden[xi, yj] == turn)
-        return true;
-
     return false;
 }
 
@@ -411,25 +380,37 @@ void Moves(int x, int y, int newx, int newy)
         Moves(x + newx, y + newy, newx, newy);
     }
 }
+
+bool ShowHelp()
+{
+    for (int x = 0; x < n; x++)
+        for (int y = 0; y < n; y++)
+            if (velden[x, y] == 0)
+            {
+                CheckLegal(x, y);
+                return true;
+            }
+
+    return false;
+}
+
 void zetsteen(object sender, MouseEventArgs mea)
 {
     int x = n * mea.X / board.Width;
     int y = n * mea.Y / board.Height;
 
-    if (turn == 1)
-    { velden[x, y] = 1; }
-
-    else if (turn == 2)
-    { velden[x, y] = 2; }
+    if (velden[x, y] == 0 && CheckLegal(x, y))
+    {
+        velden[x, y] = turn;
+    }
 
     board.Invalidate();
     SwitchPlayer();
     CountPieces();
 
 }
-board.MouseClick += zetsteen;
 
+board.MouseClick += zetsteen;
 board.Paint += DrawBoard;
-//board.MouseClick += Veld_Play;
 
 Application.Run(scherm);
