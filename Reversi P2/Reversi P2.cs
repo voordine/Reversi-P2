@@ -106,6 +106,7 @@ PlayerBl.Paint += player1;
 PlayerWh.Paint += player2;
 #endregion
 
+//Startpositie
 int n = 6;
 int[,] velden = new int[n, n];
 int turn = 1;
@@ -113,23 +114,25 @@ InitializeBoard();
 
 #region
 
-//int beurt omzetten naar string
-string Beurtstring()
+//int turn omzetten naar string zodat het als tekst op het label kan
+string turnstring()
 {
     if (turn == 1)
         return "Black's turn";
     else
         return "White's turn";
 }
-zet.Text = Beurtstring();
-void click4(object o, EventArgs ea)
+zet.Text = turnstring();
+
+//als n = i, dan i x i array die begint bij 0 en eindigt bij i - 1
+void click4(object o, EventArgs ea) 
 {
     n = 4;
     InitializeBoard();
     board.Invalidate();
 }
 
-void click6(object o, EventArgs ea)
+void click6(object o, EventArgs ea) 
 {
     n = 6;
     InitializeBoard();
@@ -149,6 +152,7 @@ void click10(object o, EventArgs ea)
     InitializeBoard();
     board.Invalidate();
 }
+
 
 void playagain(object o, EventArgs ea)
 {
@@ -176,6 +180,7 @@ newgame.Click += playagain;
 rules.Click += showrules;
 #endregion
 
+//Array voor het speelveld maken
 void InitializeBoard()
 {
     velden = new int[n, n];
@@ -194,6 +199,7 @@ void InitializeBoard()
     CountPieces();
 }
 
+//Speelveld en beginstenen tekenen
 void DrawBoard(object o, PaintEventArgs pea)
 {
     Graphics gr = pea.Graphics;
@@ -227,7 +233,7 @@ void DrawBoard(object o, PaintEventArgs pea)
 int breedte = board.Width / n;
 int hoogte = board.Height / n;
 
-//Methode die de stenen telt van beide spelers
+//Stenen tellen van beide spelers
 void CountPieces()
 {
     int BlackPieces = 0;
@@ -245,7 +251,7 @@ void CountPieces()
                 WhitePieces++;
             }
         }
-    //omzetten naar strings zodat t als tekst op de labels kan
+    //ints omzetten naar strings zodat t als tekst op de labels kan
     string BlackPiecesstr = BlackPieces.ToString(); 
     string WhitePiecesstr = WhitePieces.ToString();
     statsbl.Text = BlackPiecesstr;
@@ -254,25 +260,25 @@ void CountPieces()
 } 
 
 void SwitchPlayer(bool moremoves = false)
-{ 
+{
     //Hier de legaliteit herchecken, en veld hertekenen
-    bool geenzetten = true;
+    bool nomoremoves = true;
     for (int x = 0; x < breedte; x++)
     {
         for (int y = 0; y < hoogte; y++)
         {
             //Als er nog geen legale zetten zijn, moet geenzetten gecheckt worden
-            if (geenzetten) 
+            if (nomoremoves) 
             {
                 if (CheckLegal(x, y))
                 {
-                    geenzetten = false;
+                    nomoremoves = false;
                 }
             }
         }
     }
 
-    if (!geenzetten)
+    if (!nomoremoves)
     {
         if (turn == 1)
             turn = 2;
@@ -282,11 +288,11 @@ void SwitchPlayer(bool moremoves = false)
     }
     else
     {
-        WinningMessage();
+        GameOver();
     }
 }
 
-void WinningMessage()
+void GameOver()
 {
     int BlackPieces = 0;
     int WhitePieces = 0;
@@ -305,26 +311,27 @@ void WinningMessage()
     }
 
 }
+
 //Check de legaliteit van het vlak op x, y in elke richting
 //Zet is illegaal, behalve als er een legale richting gevonden wordt
 bool CheckLegal(int x, int y)
 {
     if (velden[x, y] != 0)
-        return false;
+        return false; 
     for (int m = -1; m <= 1; m++)
         for (int n = -1; n <= 1; n++)
             if (!(n == 0 && m == 0))
-                if (outflank(x + m, y + n, m, n))
+                if (outflank(x + m, y + n, m, n, false, true))
                     return true;
     return false;
 }
 
-void Veld_Play(object o, MouseEventArgs mea)
+/*void Veld_Play(object o, MouseEventArgs mea)
 {
     PlayReversi(mea.X, mea.Y); 
     SwitchPlayer();
    
-}
+}*/
 
 //Vindt in elke richting een insluiter (stopt dus niet bij de eerste vinder) en speelt als gevonden
 void PlayReversi(int x, int y)
@@ -337,10 +344,10 @@ void PlayReversi(int x, int y)
                 outflank(x + m, y + n, m, n, true);
 }
 
-//Vind een insluitende steen met minstends één rode ertussen
-bool outflank(int x, int y, int newx, int newy, bool play = false, bool first = true)
+//Vind een insluitende steen met minstends één andere ertussen
+bool outflank(int x, int y, int newx, int newy, bool play = false, bool firststone = true)
 {
-    if (x < 0 || y < 0 || x >= n - 1 || y >= n - 1)
+    if (x < 0 || y < 0 || x > n - 1 || y > n - 1)
     {
         //Hij zoekt buiten het veld, dus niet op tijd gevonden
         return false;
@@ -348,14 +355,16 @@ bool outflank(int x, int y, int newx, int newy, bool play = false, bool first = 
 
     if (velden[x, y] == 0)
     {
-        return false;
+        return false; //Als een vak leeg is kan het niet ingesloten worden
     }
 
     if (velden[x, y] == turn)
     {
-        //Als de aanliggende steen meteen van dezelfde kleur is, is insluiter false
-        if (first) return false;
-
+        {
+            //Als de aanliggende steen meteen van dezelfde kleur is, is outflank false
+            if (firststone) return false;
+            //return true;
+        }
         //Er is een insluitende steen gevonden, als het een zet is moet er worden gespeeld
         //Anders alleen return
         if (outflank(x + newx, y + newy, newx, newy, play, false))
@@ -395,12 +404,11 @@ void zetsteen(object sender, MouseEventArgs mea)
     { velden[x, y] = 2; }
 
     board.Invalidate();
-
     SwitchPlayer();
 
 } board.MouseClick += zetsteen;
 
 board.Paint += DrawBoard;
-board.MouseClick += Veld_Play;
+//board.MouseClick += Veld_Play;
 
 Application.Run(scherm);
