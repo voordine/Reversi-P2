@@ -120,10 +120,8 @@ string turnstring()
 {
     if (turn == 1)
         return "Black's turn";
-    else if (turn == 2)
+    else 
         return "White's turn";
-    else
-        return "caca";
 }
 
 //als n = i, dan i x i array die begint bij 0 en eindigt bij i - 1
@@ -157,6 +155,7 @@ void click10(object o, EventArgs ea)
 
 void playagain(object o, EventArgs ea)
 {
+    turn = 1;
     InitializeBoard();
     board.Invalidate();
 }
@@ -206,6 +205,7 @@ void InitializeBoard()
     velden[n / 2, n / 2 - 1] = 2;
 
     CountPieces();
+
 }
 
 //Speelveld en beginstenen tekenen
@@ -236,6 +236,7 @@ void DrawBoard(object o, PaintEventArgs pea)
         }
 
     }
+    //Voor als de helpfunctie geactiveerd is
     if (helpme)
         for (int x = 0; x < n; x++)
             for (int y = 0; y < n; y++)
@@ -278,13 +279,13 @@ void CountPieces()
 
 void SwitchPlayer(bool moremoves = false)
 {
-    //Hier de legaliteit herchecken, en veld hertekenen
+    //Hier de legaliteit opnieuw checken
     bool nomoremoves = true;
     for (int x = 0; x < n; x++)
     {
         for (int y = 0; y < n; y++)
         {
-            //Als er nog geen legale zetten zijn, moet geenzetten gecheckt worden
+            //Als er nog geen legale zetten zijn, moet nomoremoves gecheckt worden
             if (nomoremoves) 
             {
                 if (CheckLegal(x, y))
@@ -294,7 +295,7 @@ void SwitchPlayer(bool moremoves = false)
             }
         }
     }
-
+    //als er wel zetten zijn, na de zet de beurt veranderen naar de andere speler en de nieuwe stenen optellen
     if (!nomoremoves)
     {
         if (turn == 1)
@@ -307,12 +308,25 @@ void SwitchPlayer(bool moremoves = false)
     {
         GameOver();
     }
+    zet.Text = turnstring();
 }
 
 void GameOver()
 {
-    int BlackPieces = 2;
-    int WhitePieces = 2;
+    int BlackPieces = 0;
+    int WhitePieces = 0;
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+        {
+            if (velden[i, j] == 1)
+            {
+                BlackPieces++;
+            }
+            else if (velden[i, j] == 2)
+            {
+                WhitePieces++;
+            }
+        }
     CountPieces();
     if (BlackPieces > WhitePieces)
     {
@@ -357,7 +371,7 @@ bool CheckLegal(int x, int y)
     return false;
 }
 
-//Vind een insluitende steen met minstends één andere ertussen
+//Deze functie vindt een insluitende steen en gaat door als het vakje binnen de array zit, niet dezelfde kleur als de speler heeft en niet leeg is
 bool outflank(int x, int y, int newx, int newy)
 {
     while (x >= 0 && x < n && y >= 0 && y < n && velden[x, y] != turn && velden[x, y] != 0)
@@ -374,7 +388,7 @@ bool outflank(int x, int y, int newx, int newy)
 }
 
 //Speel stenen terug tot de beurt wordt teruggevonden
-void Moves(int x, int y, int newx, int newy)
+/*void Moves(int x, int y, int newx, int newy)
 {
     //Blijf stenen van naar eigen kleur zetten tot eigen kleur wordt teruggevonden
     //Speelstenen wordt aangeroepen door een legaliteitscheck, dat hoeft hier niet dubbel
@@ -384,10 +398,9 @@ void Moves(int x, int y, int newx, int newy)
         velden[x, y] = turn;
         Moves(x + newx, y + newy, newx, newy);
     }
-}
+}*/
 
-
-void zetsteen(object sender, MouseEventArgs mea)
+void PlayPieces(object sender, MouseEventArgs mea)
 {
     int x = n * mea.X / board.Width;
     int y = n * mea.Y / board.Height;
@@ -395,15 +408,45 @@ void zetsteen(object sender, MouseEventArgs mea)
     if (velden[x, y] == 0 && CheckLegal(x, y))
     {
         velden[x, y] = turn;
+
+        int dx = -1;
+        int dy = -1;
+
+        if (x < 1)
+            dx = 0;
+        if (y < 1)
+            dy = 0;
+
+        int ex = 1;
+        int ey = 1;
+
+        if (x >= (n - 1))
+            ex = 0;
+        if (y >= (n - 1))
+            ey = 0;
+
+        for (int k = dx; k <= ex; k++)
+            for(int l = dy; l <= ey; l++)
+                if (velden[x+k, y+l] != turn && velden[x+k, y+l] != 0)
+                    if (outflank(x, y, k, l))
+                    {
+                        int p = x + k;
+                        int q = y + l;
+                        while (p >= 0 && p< n && q>= 0 && q< n && velden[p, q] != 0 && velden[p, q] != turn)
+                        {
+                            velden[p, q] = turn;
+                            p += k;
+                            q += l;
+                        }
+                    }
     }
 
     board.Invalidate();
-    SwitchPlayer();
     CountPieces();
-
+    SwitchPlayer();
 }
 
-board.MouseClick += zetsteen;
+board.MouseClick += PlayPieces;
 board.Paint += DrawBoard;
 
 Application.Run(scherm);
